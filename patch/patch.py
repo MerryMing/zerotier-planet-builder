@@ -1,5 +1,6 @@
 import os
 import json
+import glob
 from re import M
 
 
@@ -43,7 +44,21 @@ def patch():
         world = "".join(cpp.readlines())
         world = world.replace("//__PATCH_REPLACE__", text)
 
-    with open("/opt/ZeroTierOne/attic/world/mkworld.cpp", "w") as cpp:
+    # Try to find where the ZeroTier source places mkworld.cpp. Historically
+    # it was under /opt/ZeroTierOne/attic/world/, but newer versions may use
+    # /opt/ZeroTierOne/world/ or another location. Search the repo first and
+    # fall back to the historical path (creating directories if needed).
+    candidates = glob.glob('/opt/ZeroTierOne/**/mkworld.cpp', recursive=True)
+    if candidates:
+        target = candidates[0]
+        target_dir = os.path.dirname(target)
+    else:
+        target_dir = '/opt/ZeroTierOne/attic/world'
+        target = os.path.join(target_dir, 'mkworld.cpp')
+        # ensure directory exists so open(..., 'w') won't fail
+        os.makedirs(target_dir, exist_ok=True)
+
+    with open(target, "w") as cpp:
         cpp.write(world)
 
 

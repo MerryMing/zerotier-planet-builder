@@ -12,11 +12,15 @@ RUN cd /opt && \
 
 RUN echo "install zerotier..." && \
     curl -s https://install.zerotier.com | bash > /dev/null && \
+    cd /var/lib/zerotier-one && zerotier-idtool initmoon identity.public >moon.json
 ADD ./patch /app/patch
 ARG planet
 RUN cd /app/patch && \
     python3 patch.py  && \
-    cd /var/lib/zerotier-one
+    cd /var/lib/zerotier-one  && \
+    zerotier-idtool genmoon moon.json  && \
+    mkdir moons.d  && \
+    cp ./*.moon ./moons.d
 RUN echo "compile planet..." && \
     cd /opt/ZeroTierOne/attic/world/ && sh build.sh > /dev/null && \
     cd /opt/ZeroTierOne/attic/world/ && ./mkworld > /dev/null && \
